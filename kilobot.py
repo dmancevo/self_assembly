@@ -1,29 +1,19 @@
 
 class Kilobot:
 
-  def __init__(self, bitmap):
+  def __init__(self, ID, bitmap, pos=None, grad_val=None):
     
-    self.pos = None
-    self.gradient_value = None
+    self.ID        = ID
+    self.pos       = pos
+    self.grad_val  = grad_val
     self.localized = False
-    self.bitmap = bitmap
+    self.bitmap    = bitmap
     
-  def scan(self):
-    pass
   
-  def broadcast(self):
-    pass
-  
-  def compute_gradient_value(self):
+  def update_gradient_val(self):
     pass
   
   def localize(self):
-    pass
-  
-  def neighbors_gradient(self):
-    pass
-  
-  def on_edge(self):
     pass
   
   def move(self):
