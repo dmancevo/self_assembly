@@ -4,9 +4,8 @@ from math import pi
 from kilobot import Kilobot
 
 class World:
-  
-    @classmethod
-    def initialize(cls, swarmSize, robotRadius, sensorRadius, velocity, tick=100):
+
+    def __init__(cls, swarmSize, robotRadius, sensorRadius, velocity, tick=100):
         """
         tick is miliseconds between updates
         """
@@ -20,7 +19,7 @@ class World:
         cls.orientations = np.random.rand(2, swarmSize) * 2 * pi #angle with X axes
         cls.robots = []
         for i in xrange(swarmSize):
-            cls.robots.append(Kilobot(i, None, radius=robotRadius))
+            cls.robots.append(Kilobot(i, None, cls, radius=robotRadius))
 
         noise = np.random.randn(swarmSize) * velocity * 0.1 # sigma is 10% of velocity
         cls.velocities = np.fmax(velocity + noise, np.zeros((swarmSize))) #to aviod negative velocities
@@ -31,8 +30,10 @@ class World:
         cls.inSensorRadius = np.zeros((swarmSize, swarmSize))
         cls.updateInSensorRadius()
 
+        cls.estimatedPositions = []
+        cls.askInfo()
 
-    @classmethod
+
     def makeInitialFormation(cls, firstDim, offsetX, offsetY):
         swarmPos = np.zeros((2, cls.swarmSize))
         shiftX = cls.radius * 1.2
@@ -58,34 +59,35 @@ class World:
         return swarmPos
 
 
-    @classmethod
     def updateDistances(cls):
         z = np.array([[complex(cls.positions[0,i], cls.positions[1,i]) for i in range(cls.positions.shape[1])]])
         cls.distances = abs(z.T - z)
 
 
-    @classmethod
     def updateInSensorRadius(cls):
-        #TODO: replace, very slow
-        cls.inSensorRadius = np.zeros((cls.swarmSize, cls.swarmSize))
-        for i in range(cls.distances.shape[0]):
-            for j in range(i, cls.distances.shape[1]):
-                if cls.distances[i,j] <= cls.sensor:
-                    cls.inSensorRadius[i,j] = 1
-                    cls.inSensorRadius[j,i] = 1
+        cls.inSensorRadius = cls.sensor - cls.distances
+        cls.inSensorRadius = np.fmax(cls.inSensorRadius, np.zeros((cls.swarmSize, cls.swarmSize)))
+        cls.inSensorRadius = np.array(cls.inSensorRadius, dtype=bool)
 
 
-    @classmethod
-    def updateEstimatedPositions():
-        #
-        pass
 
-    @classmethod
+    def askInfo(cls):
+        cls.estimatedPositions = []
+        cls.gradients = []
+        cls.stationarity = []
+        for i in xrange(cls.swarmSize):
+            cls.estimatedPositions.append(cls.robots[i].pos)
+            cls.gradients.append(cls.robots[i].grad_val)
+            cls.stationarity.append(cls.robots[i].stationary)
+
+
     def updateWorld(cls):
         """
         this method is called each iteration from the main simulation loop
         """
         #TODO: ask all robots to make a move
+        for i in xrange(cls.swarmSize):
+            cls.robots[i].move()
 
         #TODO: update their positions
         
@@ -93,11 +95,13 @@ class World:
         cls.updateDistances()
 
         #update in sensor radius matrix
-        #cls.updateInSensorRadius()
+        cls.updateInSensorRadius()
+
+        #ask robots for (x,y), grad_val, stationary
+        cls.askInfo()
 
         return cls.positions
 
-    @classmethod
     def scan(cls, kilobot_id):
         """
         This method should be called by the kilobots to receive information
@@ -107,6 +111,8 @@ class World:
         (x,y) may be None and stationary is either True or False.
 
         """
-
+        indicesInRange = np.nonzero(cls.inSensorRadius[kilobot_id,:])[0]
+        for x in indicesInRange:
+            print x
         return []
         

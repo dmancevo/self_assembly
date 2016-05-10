@@ -21,8 +21,12 @@ shapeOffsetY = 40
 scaleX = 1
 scaleY = 1
 
-World.initialize(swarmSize, robotRadius, sensorRadius, velocity, tick)
+world = World(swarmSize, robotRadius, sensorRadius, velocity, tick)
 
+for i in xrange(100):
+    world.updateWorld()
+
+'''
 startPos = list(zip(World.positions[0,:],World.positions[1,:]))
 startPosFace = list(zip(World.positions[0,:],World.positions[1,:] + 0.75*robotRadius))
 
@@ -64,3 +68,4 @@ def mainLoop():
 anim = animation.FuncAnimation(fig, update, mainLoop, init_func=init, interval=tick)
 #anim.save('basic_animation.mp4', fps=int(1000/tick), extra_args=['-vcodec', 'libx264'])
 plt.show()
+'''

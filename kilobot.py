@@ -1,9 +1,10 @@
 import random
 import numpy as np
+#from world import World
 
 class Kilobot:
 
-  def __init__(self, ID, bitmap, pos=None, grad_val=float('inf'), radius=1):
+  def __init__(self, ID, bitmap, world, pos=None, grad_val=float('inf'), radius=1):
     
     self.ID         = ID
     self.pos        = pos
@@ -11,6 +12,7 @@ class Kilobot:
     self.bitmap     = bitmap
     self.radius     = radius
     self.stationary = True
+    self.world      = world
 
     #Seed robots never move.
     if pos != None:
@@ -21,7 +23,7 @@ class Kilobot:
       self.seed       = False
     
   
-  def update_gradient_val(self):
+  def update_gradient(self):
     """
     Update gradient value to minimum among neighbors plus one.
     """
@@ -34,7 +36,7 @@ class Kilobot:
     G = 3*self.radius
     
     #Only consider neighbors closer than G
-    grad_vals = [s[2] for s in world.scan(self.ID) if s[0]<G]
+    grad_vals = [s[2] for s in self.world.scan(self.ID) if s[0]<G]
     
     self.grad_val = min(grad_vals)+1
   
@@ -49,7 +51,7 @@ class Kilobot:
       return
     
     #Stationary neighbor positions.
-    neighbors = [(s[0],s[1]) for s in world.scan(self.ID) if s[3]]
+    neighbors = [(s[0],s[1]) for s in self.world.scan(self.ID) if s[3]]
     
     #Check if there are enough neighbors to localize.
     if not len(neighbors) > 2:
@@ -89,7 +91,7 @@ class Kilobot:
       return (0,0)
       
     #Check if there are robots nearby already moving.
-    if [1 for s in world.scan(self.ID) if not s[3]]:
+    if [1 for s in self.world.scan(self.ID) if not s[3]]:
       return (0,0)
     
     
