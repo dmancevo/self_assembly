@@ -7,10 +7,10 @@ class BitMap:
   
   def inside_figure(self, (x,y)):
     """
-    Determine of the point at coords (x,y)
+    Determine if the point at coords (x,y)
     is inside the figure or not.
     
-    Returns bollean (True or False)
+    Returns boolean (True or False)
     """
     
     pass
