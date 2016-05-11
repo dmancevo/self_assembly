@@ -13,7 +13,7 @@ class Kilobot:
     self.radius     = radius
     self.stationary = True
     self.world      = world
-    seld.dist_nn    = float('inf')
+    self.dist_nn    = float('inf')
     self.rot        = False
 
     #Seed robots never move.
@@ -134,7 +134,7 @@ class Kilobot:
       return 'stop'
       
     #Highest gradient value among neighbours
-    h = max([s[2] for s in self.world.scan(self.ID)]
+    h = max([s[2] for s in self.world.scan(self.ID)])
     
     if self.grad_val >= h:
       self.stationary = False
@@ -148,7 +148,7 @@ class Kilobot:
     
     #Move while inside.
     else:
-      
+      pass
       
     
       
