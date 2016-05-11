@@ -11,17 +11,17 @@ class Kilobot:
     self.grad_val   = grad_val
     self.bitmap     = bitmap
     self.radius     = radius
-    self.stationary = True
     self.world      = world
     self.dist_nn    = float('inf')
     self.rot        = False
+    self.state      = 'wait_to_move'
+    self.stationary = True
 
     #Seed robots never move.
     if pos is not None:
-      self.final_form = True
       self.seed       = True
+      self.state      = 'joined_shape'
     else:
-      self.final_form = False
       self.seed       = False
       
       
@@ -122,34 +122,50 @@ class Kilobot:
     #Yield distance
     Y = 4*self.radius
 
-    if self.final_form:
+    if self.state == 'joined_shape':
       return 'stop'
       
     #Update gradient and localize
     self.update_gradient()
     self.localize()
-      
-    #Check if there are robots nearby already moving.
-    if [1 for s in self.world.scan(self.ID) if not s[3]]:
-      return 'stop'
-      
-    #Highest gradient value among neighbours
-    h = max([s[2] for s in self.world.scan(self.ID)])
     
-    if self.grad_val >= h:
-      self.stationary = False
+    if self.state == 'wait_to_move':
       
-    if self.stationary:
-      return 'stop'
+      #Check if there are robots nearby already moving.
+      if [1 for s in self.world.scan(self.ID) if not s[3]]:
+        return 'stop'
+      
+      #Highest gradient value among neighbours
+      h = max([s[2] for s in self.world.scan(self.ID)])
+      
+      if self.grad_val >= h:
+        self.state = 'move_while_outside'
+        self.stationary = False
+      else:
+        return 'stop'
       
     #Move while outside.
-    if not bitmap.in_shape(self.pos):
-      pass
+    if self.state == 'move_while_outside':
+      
+      if bitmap.in_shape(self.pos):
+        self.state = 'move_while_inside'
+        
+      return self.edge_follow(1.1*self.radius)
     
     #Move while inside.
-    else:
-      pass
+    elif self.state == 'move_while_inside':
       
-    
+      if not bitmap.in_shape(self.pos):
+        self.state = 'joined_shape'
+        self.stationary = True
+        return 'stop'
       
-    
+      elif self.grad_val <= min([(s[0],s[2]) for s in self.world.scan(self.ID)],
+      key=lambda x: x[0])[1]:
+        self.state = 'joined_shape'
+        self.stationary = True
+        return 'stop'
+        
+      else:
+        return self.edge_follow(1.1*self.radius)
+          
