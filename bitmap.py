@@ -5,7 +5,7 @@ class BitMap:
   def __init__(self):
     pass
   
-  def inside_figure(self, (x,y)):
+  def in_shape(self, (x,y)):
     """
     Determine if the point at coords (x,y)
     is inside the figure or not.

@@ -13,14 +13,48 @@ class Kilobot:
     self.radius     = radius
     self.stationary = True
     self.world      = world
+    seld.dist_nn    = float('inf')
+    self.rot        = False
 
     #Seed robots never move.
-    if pos != None:
+    if pos is not None:
       self.final_form = True
       self.seed       = True
     else:
       self.final_form = False
       self.seed       = False
+      
+      
+  def edge_follow(self, desired):
+    """
+    Edge following routine.
+    """
+    
+    if self.rot:
+      self.rot = False
+      return 'forward'
+    
+    prev = self.dist_nn
+    current = min([s[0] for s in self.world.scan(self.ID)])
+    
+    move = 'stop'
+      
+    if current < desired:
+      if prev < current:
+        move = 'forward'
+      else:
+        move = 'counter-clock'
+        self.rot = True
+    else:
+      if prev > current:
+        move = 'forwad'
+      else:
+        move = 'clock'
+        self.rot = True
+        
+    self.dist_nn = current
+    
+    return move
     
   
   def update_gradient(self):
@@ -85,14 +119,37 @@ class Kilobot:
     Return desired movement direction as a tuple.
     """
     
+    #Yield distance
+    Y = 4*self.radius
+
+    if self.final_form:
+      return 'stop'
+      
+    #Update gradient and localize
     self.update_gradient()
-    
-    if self.self.final_form:
-      return (0,0)
+    self.localize()
       
     #Check if there are robots nearby already moving.
     if [1 for s in self.world.scan(self.ID) if not s[3]]:
-      return (0,0)
+      return 'stop'
+      
+    #Highest gradient value among neighbours
+    h = max([s[2] for s in self.world.scan(self.ID)]
     
+    if self.grad_val >= h:
+      self.stationary = False
+      
+    if self.stationary:
+      return 'stop'
+      
+    #Move while outside.
+    if not bitmap.in_shape(self.pos):
+      pass
     
-  
+    #Move while inside.
+    else:
+      
+      
+    
+      
+    
