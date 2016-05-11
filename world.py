@@ -5,104 +5,142 @@ from kilobot import Kilobot
 
 class World:
 
-    def __init__(cls, swarmSize, robotRadius, sensorRadius, velocity, tick=100):
+    def __init__(self, swarmSize, robotRadius, sensorRadius, velocity, tick=100):
         """
         tick is miliseconds between updates
         """
-        cls.swarmSize = swarmSize
-        cls.radius = robotRadius
-        cls.sensor = sensorRadius
-        cls.tick = tick
-        cls.avgVelocity = velocity
+        self.swarmSize = swarmSize
+        self.fullSwarmSize = self.swarmSize + 4
+        self.radius = robotRadius
+        self.sensor = sensorRadius
+        self.tick = tick
+        self.avgVelocity = velocity
 
-        cls.positions = cls.makeInitialFormation(50, 10, 10)
-        cls.orientations = np.random.rand(2, swarmSize) * 2 * pi #angle with X axes
-        cls.robots = []
-        for i in xrange(swarmSize):
-            cls.robots.append(Kilobot(i, None, cls, radius=robotRadius))
+        self.initialFormationWidth = 35
+        self.initialFormationOffsetX = -30
+        self.initialFormationOffsetY = 0
 
-        noise = np.random.randn(swarmSize) * velocity * 0.1 # sigma is 10% of velocity
-        cls.velocities = np.fmax(velocity + noise, np.zeros((swarmSize))) #to aviod negative velocities
+        self.robots = []
+        #add 4 source robots
+        source = self.computeSourceRobotsPositions()
+        self.robots.append(Kilobot(0, None, self, (source[:,0]), grad_val=0, radius=robotRadius))
+        for i in xrange(1, 4):
+            self.robots.append(Kilobot(i, None, self, (source[:,i]),grad_val=1, radius=robotRadius))
+
+        self.positions = np.hstack((source, self.makeInitialFormation()))
+
+        #shift everything so that source is at (0,0)
+        self.positions = (self.positions.T - self.positions[:,0].T).T
         
-        cls.distances = np.array((swarmSize, swarmSize))
-        cls.updateDistances()
+        for i in xrange(4, self.fullSwarmSize):
+            self.robots.append(Kilobot(i, None, self, radius=robotRadius))
 
-        cls.inSensorRadius = np.zeros((swarmSize, swarmSize))
-        cls.updateInSensorRadius()
+        self.colors = ['green'] * 4 + ['blue'] * self.swarmSize
+        
+        self.orientations = np.random.rand(2, self.fullSwarmSize) * 2 * pi #angle with X axes
 
-        cls.estimatedPositions = []
-        cls.askInfo()
+        noise = np.random.randn(self.fullSwarmSize) * velocity * 0.1 # sigma is 10% of velocity
+        self.velocities = np.fmax(velocity + noise, np.zeros((self.fullSwarmSize))) #to aviod negative velocities
+        
+        self.distances = np.array((self.fullSwarmSize, self.fullSwarmSize))
+        self.updateDistances()
+
+        self.inSensorRadius = np.zeros((self.fullSwarmSize, self.fullSwarmSize))
+        self.updateInSensorRadius()
+
+        self.estimatedPositions = []
+        self.askInfo()
 
 
-    def makeInitialFormation(cls, firstDim, offsetX, offsetY):
-        swarmPos = np.zeros((2, cls.swarmSize))
-        shiftX = cls.radius * 1.2
-        shiftY = (3**0.5) * cls.radius * 1.2
+    def makeInitialFormation(self):
+        swarmPos = np.zeros((2, self.swarmSize))
+        shiftX = self.radius * 1.2
+        shiftY = (3**0.5) * self.radius * 1.2
         x = 0
         y = 0
         row = 1
-        for i in xrange(cls.swarmSize):
+        for i in xrange(self.swarmSize):
             swarmPos[0, i] = x
             swarmPos[1, i] = y
             
-            if (i+1) % firstDim == 0:
+            if (i+1) % self.initialFormationWidth == 0:
                 row += 1
-                y += shiftY
+                y -= shiftY
                 x = shiftX if row%2==0 else 0
             else:
                 x += 2 * shiftX
 
         #move
-        swarmPos[0,:] += offsetX
-        swarmPos[1,:] += offsetY
+        swarmPos[0,:] += self.initialFormationOffsetX
+        swarmPos[1,:] += self.initialFormationOffsetY
 
         return swarmPos
 
 
-    def updateDistances(cls):
-        z = np.array([[complex(cls.positions[0,i], cls.positions[1,i]) for i in range(cls.positions.shape[1])]])
-        cls.distances = abs(z.T - z)
+    def computeSourceRobotsPositions(self):
+        source = np.zeros((2, 4))
+        shiftX = self.radius * 1.2
+        shiftY = (3**0.5) * self.radius * 1.2
+
+        source[0,0] = self.initialFormationOffsetX
+        source[1,0] = self.initialFormationOffsetY + 2 * shiftY
+
+        source[0,1] = source[0,0] + 2 * shiftX
+        source[1,1] = source[1,0]
+
+        source[0,2] = source[0,0] + shiftX
+        source[1,2] = source[1,0] + shiftY
+
+        source[0,3] = source[0,0] + shiftX
+        source[1,3] = source[1,0] - shiftY
+
+        return source
 
 
-    def updateInSensorRadius(cls):
-        cls.inSensorRadius = cls.sensor - cls.distances
-        cls.inSensorRadius = np.fmax(cls.inSensorRadius, np.zeros((cls.swarmSize, cls.swarmSize)))
-        cls.inSensorRadius = np.array(cls.inSensorRadius, dtype=bool)
+    def updateDistances(self):
+        z = np.array([[complex(self.positions[0,i], self.positions[1,i]) for i in range(self.positions.shape[1])]])
+        self.distances = abs(z.T - z)
+
+
+    def updateInSensorRadius(self):
+        self.inSensorRadius = self.sensor - self.distances
+        self.inSensorRadius = np.fmax(self.inSensorRadius, np.zeros((self.fullSwarmSize, self.fullSwarmSize)))
+        self.inSensorRadius = np.array(self.inSensorRadius, dtype=bool)
 
 
 
-    def askInfo(cls):
-        cls.estimatedPositions = []
-        cls.gradients = []
-        cls.stationarity = []
-        for i in xrange(cls.swarmSize):
-            cls.estimatedPositions.append(cls.robots[i].pos)
-            cls.gradients.append(cls.robots[i].grad_val)
-            cls.stationarity.append(cls.robots[i].stationary)
+    def askInfo(self):
+        self.estimatedPositions = []
+        self.gradients = []
+        self.stationarity = []
+        for i in xrange(self.fullSwarmSize):
+            self.estimatedPositions.append(self.robots[i].pos)
+            self.gradients.append(self.robots[i].grad_val)
+            self.stationarity.append(self.robots[i].stationary)
 
 
-    def updateWorld(cls):
+    def updateWorld(self):
         """
         this method is called each iteration from the main simulation loop
         """
         #TODO: ask all robots to make a move
-        for i in xrange(cls.swarmSize):
-            cls.robots[i].move()
+        for i in xrange(self.fullSwarmSize):
+            self.robots[i].move()
 
         #TODO: update their positions
         
         #update distances
-        cls.updateDistances()
+        self.updateDistances()
 
         #update in sensor radius matrix
-        cls.updateInSensorRadius()
+        self.updateInSensorRadius()
 
         #ask robots for (x,y), grad_val, stationary
-        cls.askInfo()
+        self.askInfo()
 
-        return cls.positions
+        return self.positions
 
-    def scan(cls, kilobot_id):
+    def scan(self, kilobot_id):
         """
         This method should be called by the kilobots to receive information
         about their neighbors.
@@ -111,8 +149,12 @@ class World:
         (x,y) may be None and stationary is either True or False.
 
         """
-        indicesInRange = np.nonzero(cls.inSensorRadius[kilobot_id,:])[0]
-        for x in indicesInRange:
-            print x
-        return []
+        indicesInRange = np.nonzero(self.inSensorRadius[kilobot_id,:])[0]
+        scanData = []
+        for ind in indicesInRange:
+            if ind != kilobot_id:
+                neihbourData = (self.distances[kilobot_id, ind], self.estimatedPositions[ind], self.gradients[ind], self.stationarity[ind])
+                scanData.append(neihbourData)
+        
+        return scanData
         
