@@ -85,7 +85,7 @@ class Kilobot:
       return
     
     #Stationary neighbor positions.
-    neighbors = [(s[0],s[1]) for s in self.world.scan(self.ID) if s[3]]
+    neighbors = [(s[0],s[1]) for s in self.world.scan(self.ID) if s[3] and s[1] is not None]
     
     #Check if there are enough neighbors to localize.
     if not len(neighbors) > 2:
