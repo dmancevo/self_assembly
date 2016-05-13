@@ -6,4 +6,4 @@ Rubenstein, Michael, Alejandro Cornejo, and Radhika Nagpal. "Programmable self-a
 
 To run:
 
-python simulation.py
+`python simulation.py`
