@@ -119,6 +119,9 @@ class Kilobot:
     Return desired movement direction as a tuple.
     """
     
+    if self.bitmap is None:
+      return 'stop'
+    
     #Yield distance
     Y = 4*self.radius
 
@@ -129,13 +132,19 @@ class Kilobot:
     self.update_gradient()
     self.localize()
     
+    #Check if kilobot is not already in shape.
+    if self.bitmap.in_shape(self.pos):
+      self.state = 'joined_shape'
+      self.stationary = True
+      return 'stop'
+    
     if self.state == 'wait_to_move':
       
       #Check if there are robots nearby already moving.
       if [1 for s in self.world.scan(self.ID) if not s[3]]:
         return 'stop'
       
-      #Highest gradient value among neighbours
+      #Highest gradient value among neighbours.
       h = max([s[2] for s in self.world.scan(self.ID)])
       
       if self.grad_val >= h:
@@ -147,7 +156,7 @@ class Kilobot:
     #Move while outside.
     if self.state == 'move_while_outside':
       
-      if bitmap.in_shape(self.pos):
+      if self.bitmap.in_shape(self.pos):
         self.state = 'move_while_inside'
         
       return self.edge_follow(1.1*self.radius)
@@ -155,7 +164,7 @@ class Kilobot:
     #Move while inside.
     elif self.state == 'move_while_inside':
       
-      if not bitmap.in_shape(self.pos):
+      if not self.bitmap.in_shape(self.pos):
         self.state = 'joined_shape'
         self.stationary = True
         return 'stop'

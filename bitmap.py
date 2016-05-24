@@ -16,9 +16,20 @@ class BitMap:
     Returns boolean (True or False)
     """
     
-    pos = (int(np.round(pos[0])),int(np.round(pos[1])))
+    if pos is None:
+      return False
     
+    pos = (int(np.round(pos[0])),int(np.round(pos[1])))
     return self.arr[pos] != 255
+    
+  def origin(self):
+    """
+    Return origin position.
+    """
+    coords = np.transpose(np.nonzero(self.arr-255))
+    ind = np.random.choice(range(len(coords)))
+    return coords[ind]
+    
   
 if __name__ == '__main__':
   
@@ -26,3 +37,6 @@ if __name__ == '__main__':
   print bitmap.in_shape((345,203))
   
   print bitmap.arr.shape
+  
+  origin = bitmap.origin()
+  print origin
