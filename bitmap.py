@@ -29,7 +29,8 @@ class BitMap:
     Return origin position.
     """
     ind = np.random.choice(range(len(self.shape)))
-    self.origin = self.shape[ind]
+    y, x = self.shape[ind]
+    self.origin = (x, y)
     
   
 if __name__ == '__main__':
