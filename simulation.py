@@ -58,7 +58,7 @@ max_g = 40.
 colors = map(lambda x: 0 if max_g==float('inf') else x/max_g , grad)
 
 circles = ax.add_collection(EllipseCollection(widths=2*robotRadius, heights=2*robotRadius, angles=0,
-                                    units='xy', edgecolors='black', linewidth=0.5,#facecolors=world.colors, 
+                                    units='xy', edgecolors='black', linewidth=0.5,#facecolors=world.colors,
                                     offsets=startPos, transOffset=ax.transData))
 circles.set_array(np.array(grad))
 points = ax.add_collection(EllipseCollection(widths=0.5*robotRadius, heights=0.5*robotRadius, angles=0,
