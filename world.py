@@ -6,7 +6,7 @@ from bitmap import BitMap
 
 class World:
 
-    def __init__(self, swarmSize, robotRadius, sensorRadius, velocity, ang_vel=0.1, tick=100):
+    def __init__(self, swarmSize, robotRadius, sensorRadius, velocity, ang_vel=3, tick=100):
         """
         tick is miliseconds between updates
         """
@@ -17,7 +17,7 @@ class World:
         self.radius = robotRadius
         self.sensor = sensorRadius
         self.tick = tick
-        self.avgVelocity = velocity
+        #self.avgVelocity = velocity
 
         self.initialFormationWidth = 35
         self.initialFormationOffsetX = -30
@@ -181,6 +181,7 @@ class World:
                 self.turn(i, -1)
             elif move == "counter-clock":
                 self.turn(i, 1)
+                #print move
             elif move == "forward":
                 
                 self.move(i)
