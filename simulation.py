@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.collections import EllipseCollection
 from world import World
+from bitmap import BitMap
+from scipy.misc import imread
 
 robotRadius = 0.7
 sensorRadius = 5
@@ -24,8 +26,12 @@ shapeOffsetY = 0
 scaleX = 1
 scaleY = 1
 
-bitmap = BitMap("shape1.png")
-world = World(bitmap, swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
+
+bitmap = BitMap("shape3.png")
+datafile = open("shapes/shape3.png")
+img = imread(datafile)
+
+world = World(bitmap,  swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
 fasePos = world.rotate(0.75*robotRadius)
 '''
 for i in xrange(100):
@@ -90,5 +96,6 @@ def mainLoop():
 
 anim = animation.FuncAnimation(fig, update, mainLoop, init_func=init, interval=tick)
 #anim.save('basic_animation.mp4', fps=int(1000/tick), extra_args=['-vcodec', 'libx264'])
+plt.imshow(img, zorder=0)
 plt.show()
 
