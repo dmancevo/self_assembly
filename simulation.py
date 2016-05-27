@@ -6,8 +6,8 @@ from world import World
 
 robotRadius = 0.7
 sensorRadius = 5
-swarmSize = 500
-tick = 100 # miliseconds
+swarmSize = 100
+tick = 50 # miliseconds
 velocity = 1
 
 fieldSizeX1 = -30
@@ -24,14 +24,15 @@ scaleX = 1
 scaleY = 1
 
 world = World(swarmSize, robotRadius, sensorRadius, velocity, tick)
+fasePos = world.rotate(0.75*robotRadius)
 '''
 for i in xrange(100):
     world.updateWorld()
 '''
 
 startPos = list(zip(world.positions[0,:], world.positions[1,:]))
-startPosFace = list(zip(world.positions[0,:], world.positions[1,:] + 0.75*robotRadius))
-
+#startPosFace = list(zip(world.positions[0,:], world.positions[1,:] + 0.75*robotRadius))
+startPosFace = list(zip(world.positions[0,:] + fasePos[0,:], world.positions[1,:] + fasePos[1,:]))
 
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_axes([0, 0, 1, 1], frameon=False)
@@ -47,7 +48,7 @@ max_g = 40.
 colors = map(lambda x: 0 if max_g==float('inf') else x/max_g , grad)
 
 circles = ax.add_collection(EllipseCollection(widths=2*robotRadius, heights=2*robotRadius, angles=0,
-                                    units='xy',
+                                    units='xy', edgecolors='black', linewidth=0.5,#facecolors=world.colors, 
                                     offsets=startPos, transOffset=ax.transData))
 circles.set_array(np.array(grad))
 points = ax.add_collection(EllipseCollection(widths=0.5*robotRadius, heights=0.5*robotRadius, angles=0,
@@ -61,22 +62,27 @@ def init():
 
 
 def update(frame):
+    circles.set_offsets(list(zip(frame[0], frame[1])))
+    
     grad = world.gradients
     max_g = 40.
     colors = map(lambda x: 0 if max_g==float('inf') else x/max_g , grad)
-    
-    circles.set_offsets(list(zip(frame[0], frame[1])))
     circles.set_color(Blues(np.array(colors)))
-    points.set_offsets(list(zip(frame[0], frame[1] + 0.75*robotRadius)))
+    circles.set_edgecolor('black')
+
+    #points.set_offsets(list(zip(frame[0], frame[1] + 0.75*robotRadius)))
+    points.set_offsets(list(zip(frame[0] + frame[2], frame[1] + frame[3])))
     return circles
 
 
 def mainLoop():
     while True:
         world.updateWorld()
-        yield world.positions[0,:], world.positions[1,:]
+        fasePos = world.rotate(0.75*robotRadius)
+        yield world.positions[0,:], world.positions[1,:], fasePos[0,:], fasePos[1,:]
         
 
 anim = animation.FuncAnimation(fig, update, mainLoop, init_func=init, interval=tick)
 #anim.save('basic_animation.mp4', fps=int(1000/tick), extra_args=['-vcodec', 'libx264'])
 plt.show()
+
