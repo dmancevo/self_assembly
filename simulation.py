@@ -9,6 +9,7 @@ sensorRadius = 5
 swarmSize = 100
 tick = 50 # miliseconds
 velocity = 1
+ang_velocity = 4
 
 fieldSizeX1 = -30
 fieldSizeX2 = 70
@@ -23,7 +24,7 @@ shapeOffsetY = 0
 scaleX = 1
 scaleY = 1
 
-world = World(swarmSize, robotRadius, sensorRadius, velocity, tick)
+world = World(swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
 fasePos = world.rotate(0.75*robotRadius)
 '''
 for i in xrange(100):
