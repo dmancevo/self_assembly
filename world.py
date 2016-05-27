@@ -17,12 +17,10 @@ class World:
         self.radius = robotRadius
         self.sensor = sensorRadius
         self.tick = tick
-        #self.avgVelocity = velocity
         origin = bitmap.origin
         self.initialFormationWidth = 25
-        self.initialFormationOffsetX = origin[0]#-30
+        self.initialFormationOffsetX = origin[0]
         self.initialFormationOffsetY = origin[1]
-        print(origin, self.initialFormationOffsetX, self.initialFormationOffsetY)
 
         self.robots = []
         #add 4 source robots
@@ -35,7 +33,6 @@ class World:
 
         #shift everything so that source is at (0,0)
         #self.positions = (self.positions.T - self.positions[:,0].T).T
-        print(self.positions[:,0])
         
         for i in xrange(4, self.fullSwarmSize):
             self.robots.append(Kilobot(i, bitmap, self, radius=robotRadius))
@@ -76,7 +73,7 @@ class World:
         shiftX = self.radius * 1.2
         shiftY = (3**0.5) * self.radius * 1.2
         x = 0
-        y = 0
+        y = -2 * shiftY
         row = 1
         for i in xrange(self.swarmSize):
             swarmPos[0, i] = x
@@ -102,7 +99,7 @@ class World:
         shiftY = (3**0.5) * self.radius * 1.2
 
         source[0,0] = self.initialFormationOffsetX
-        source[1,0] = self.initialFormationOffsetY + 2 * shiftY
+        source[1,0] = self.initialFormationOffsetY
 
         source[0,1] = source[0,0] + 2 * shiftX
         source[1,1] = source[1,0]

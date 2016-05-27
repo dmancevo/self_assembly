@@ -8,15 +8,15 @@ from scipy.misc import imread
 
 robotRadius = 0.7
 sensorRadius = 5
-swarmSize = 100
+swarmSize = 50
 tick = 50 # miliseconds
 velocity = 1
 ang_velocity = 4
 
-fieldSizeX1 = -30
-fieldSizeX2 = 70
-fieldSizeY1 = -50
-fieldSizeY2 = 50
+fieldSizeX1 = 0
+fieldSizeX2 = 100
+fieldSizeY1 = 0
+fieldSizeY2 = 100
 
 #shape to assemble
 shapeX = np.array([0, 20, 20, 10, 10, 0, 0])
@@ -26,10 +26,12 @@ shapeOffsetY = 0
 scaleX = 1
 scaleY = 1
 
+file_path = "shapes/shape1.png"
 
-bitmap = BitMap("shape3.png")
-datafile = open("shapes/shape3.png")
-img = imread(datafile)
+bitmap = BitMap(file_path)
+datafile = open(file_path)
+img = imread(datafile, mode='L')
+img[np.nonzero(img-255)] = 0
 
 world = World(bitmap,  swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
 fasePos = world.rotate(0.75*robotRadius)
@@ -48,7 +50,7 @@ ax.set_xlim(fieldSizeX1, fieldSizeX2), ax.set_xticks([])
 ax.set_ylim(fieldSizeY1, fieldSizeY2), ax.set_yticks([])
 plt.gca().set_aspect('equal', adjustable='box')
 
-shape = ax.plot(shapeOffsetX + scaleX * shapeX, shapeOffsetY + scaleY * shapeY)
+#shape = ax.plot(shapeOffsetX + scaleX * shapeX, shapeOffsetY + scaleY * shapeY)
 
 Blues = plt.get_cmap('Blues')
 grad = world.gradients
@@ -96,6 +98,6 @@ def mainLoop():
 
 anim = animation.FuncAnimation(fig, update, mainLoop, init_func=init, interval=tick)
 #anim.save('basic_animation.mp4', fps=int(1000/tick), extra_args=['-vcodec', 'libx264'])
-plt.imshow(img, zorder=0)
+plt.imshow(img, interpolation='none', cmap="hot", zorder=0)
 plt.show()
 
