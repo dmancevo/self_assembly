@@ -1,14 +1,17 @@
 #Here comes the physics engine (by Olga)
 import numpy as np
-from math import pi
+from math import pi, sin, cos, sqrt
 from kilobot import Kilobot
+from bitmap import BitMap
 
 class World:
 
-    def __init__(self, swarmSize, robotRadius, sensorRadius, velocity, tick=100):
+    def __init__(self, swarmSize, robotRadius, sensorRadius, velocity, ang_vel=0.1, tick=100):
         """
         tick is miliseconds between updates
         """
+        self.time = 0
+        bitmap = BitMap("shape1.png")
         self.swarmSize = swarmSize
         self.fullSwarmSize = self.swarmSize + 4
         self.radius = robotRadius
@@ -23,9 +26,9 @@ class World:
         self.robots = []
         #add 4 source robots
         source = self.computeSourceRobotsPositions()
-        self.robots.append(Kilobot(0, None, self, (source[:,0]), grad_val=0, radius=robotRadius))
+        self.robots.append(Kilobot(0, bitmap, self, (source[:,0]), grad_val=0, radius=robotRadius))
         for i in xrange(1, 4):
-            self.robots.append(Kilobot(i, None, self, (source[:,i]),grad_val=1, radius=robotRadius))
+            self.robots.append(Kilobot(i, bitmap, self, (source[:,i]),grad_val=1, radius=robotRadius))
 
         self.positions = np.hstack((source, self.makeInitialFormation()))
 
@@ -33,15 +36,19 @@ class World:
         self.positions = (self.positions.T - self.positions[:,0].T).T
         
         for i in xrange(4, self.fullSwarmSize):
-            self.robots.append(Kilobot(i, None, self, radius=robotRadius))
+            self.robots.append(Kilobot(i, bitmap, self, radius=robotRadius))
 
         self.colors = ['green'] * 4 + ['blue'] * self.swarmSize
         
-        self.orientations = np.random.rand(2, self.fullSwarmSize) * 2 * pi #angle with X axes
+        self.orientations = np.hstack((np.ones((4))*pi/2, np.random.rand(self.swarmSize) * 2 * pi)) #angle with X axes
 
-        noise = np.random.randn(self.fullSwarmSize) * velocity * 0.1 # sigma is 10% of velocity
-        self.velocities = np.fmax(velocity + noise, np.zeros((self.fullSwarmSize))) #to aviod negative velocities
-        
+        #noise = np.random.randn(self.fullSwarmSize) * velocity * 0.1 # sigma is 10% of velocity
+        #self.velocities = np.fmax(velocity + noise, np.zeros((self.fullSwarmSize))) #to aviod negative velocities
+        self.velocities = np.ones(self.fullSwarmSize) * velocity
+        #noise = np.random.randn(self.fullSwarmSize) * ang_vel * 0.01 # sigma is 10% of velocity
+        #self.angle_vel = np.fmax(ang_vel + noise, np.zeros((self.fullSwarmSize)))
+        self.angle_vel = np.ones(self.fullSwarmSize) * ang_vel
+
         self.distances = np.array((self.fullSwarmSize, self.fullSwarmSize))
         self.updateDistances()
 
@@ -50,6 +57,16 @@ class World:
 
         self.estimatedPositions = []
         self.askInfo()
+
+
+    def rotate(self, vec_len):
+        pos = np.zeros((2, self.orientations.shape[0]))
+        default_orient = np.array([[vec_len],[0]])
+        for i in xrange(self.orientations.shape[0]):
+            angle = self.orientations[i]
+            R = np.array([[cos(angle), -sin(angle)],[sin(angle), cos(angle)]])
+            pos[:,i] = np.dot(R, default_orient)[:,0]
+        return pos
 
 
     def makeInitialFormation(self):
@@ -119,13 +136,55 @@ class World:
             self.stationarity.append(self.robots[i].stationary)
 
 
+    def turn(self, robot_id, direct):
+        self.orientations[robot_id] += direct*self.angle_vel[robot_id]/self.tick
+
+    def move(self, robot_id):
+        default_orient = np.array([[self.velocities[robot_id]],[0]])
+        angle = self.orientations[robot_id]
+        R = np.array([[cos(angle), -sin(angle)],[sin(angle), cos(angle)]])
+        velocity = np.dot(R, default_orient)[:,0]
+        new_pos = self.positions[:,robot_id] + velocity/self.tick
+        
+        if self.checkIfValidPos(robot_id, new_pos):
+            #print self.checkIfValidPos(robot_id, new_pos)
+            self.positions[:,robot_id] = new_pos
+
+    def checkIfValidPos(self, robot_id, new_pos):
+        indicesInRange = np.nonzero(self.inSensorRadius[robot_id,:])[0]
+        for ind in indicesInRange:
+            if ind != robot_id:
+                #dist = self.distances[robot_id, ind] #not really
+                dist = sqrt((new_pos[0] - self.positions[0][ind])**2 + 
+                    (new_pos[1] - self.positions[1][ind])**2)
+                if dist < 2*self.radius:
+                    #print "can't move", dist, self.distances[robot_id, ind]
+                    return False
+        #print "moved"
+        return True
+
+
+
     def updateWorld(self):
         """
         this method is called each iteration from the main simulation loop
         """
+        self.time += 1./self.tick
+        #print self.time
         #TODO: ask all robots to make a move
+
         for i in xrange(self.fullSwarmSize):
-            self.robots[i].move()
+            move = self.robots[i].move()
+            #print self.time, i, move
+            
+            if move == "clock":
+                self.turn(i, -1)
+            elif move == "counter-clock":
+                self.turn(i, 1)
+            elif move == "forward":
+                
+                self.move(i)
+            
 
         #TODO: update their positions
         
@@ -155,6 +214,5 @@ class World:
             if ind != kilobot_id:
                 neihbourData = (self.distances[kilobot_id, ind], self.estimatedPositions[ind], self.gradients[ind], self.stationarity[ind])
                 scanData.append(neihbourData)
-        
         return scanData
         
