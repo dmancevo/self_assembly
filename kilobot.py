@@ -128,15 +128,15 @@ class Kilobot:
     
     #Yield distance
     Y = 3*self.radius
-
-    if self.state == 'joined_shape':
-      return 'stop'
-      
+    
     prev_grad = self.grad_val
       
     #Update gradient and localize
     self.update_gradient()
     self.localize()
+
+    if self.state == 'joined_shape':
+      return 'stop'
     
     #Check if kilobot is not already in shape.
     if self.bitmap.in_shape(self.pos):
