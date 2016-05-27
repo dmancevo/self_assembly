@@ -18,10 +18,11 @@ class World:
         self.sensor = sensorRadius
         self.tick = tick
         #self.avgVelocity = velocity
-
-        self.initialFormationWidth = 35
-        self.initialFormationOffsetX = -30
-        self.initialFormationOffsetY = 0
+        origin = bitmap.origin
+        self.initialFormationWidth = 25
+        self.initialFormationOffsetX = origin[0]#-30
+        self.initialFormationOffsetY = origin[1]
+        print(origin, self.initialFormationOffsetX, self.initialFormationOffsetY)
 
         self.robots = []
         #add 4 source robots
@@ -33,7 +34,8 @@ class World:
         self.positions = np.hstack((source, self.makeInitialFormation()))
 
         #shift everything so that source is at (0,0)
-        self.positions = (self.positions.T - self.positions[:,0].T).T
+        #self.positions = (self.positions.T - self.positions[:,0].T).T
+        print(self.positions[:,0])
         
         for i in xrange(4, self.fullSwarmSize):
             self.robots.append(Kilobot(i, bitmap, self, radius=robotRadius))
@@ -215,5 +217,8 @@ class World:
             if ind != kilobot_id:
                 neihbourData = (self.distances[kilobot_id, ind], self.estimatedPositions[ind], self.gradients[ind], self.stationarity[ind])
                 scanData.append(neihbourData)
+
+        if len(scanData) == 0:
+            print("EVERYTHING IS OLGA'S FAULT")
         return scanData
         

@@ -7,8 +7,10 @@ class BitMap:
     
     self.im = Image.open("shapes/{im}".format(im=image)).convert('L')
     self.arr = np.array(self.im.getdata(), np.uint8).reshape(self.im.size)
-    self.origin = self._origin()
-    
+    self.shape = np.transpose(np.nonzero(self.arr-255))
+    self._origin()
+    print(self.shape.shape)
+
 
   def in_shape(self, pos):
     """
@@ -28,9 +30,10 @@ class BitMap:
     """
     Return origin position.
     """
-    coords = np.transpose(np.nonzero(self.arr-255))
-    ind = np.random.choice(range(len(coords)))
-    return coords[ind]
+    #coords = np.transpose(np.nonzero(self.arr-255))
+    ind = np.random.choice(range(len(self.shape)))
+    self.origin = self.shape[ind]
+    #return 
     
   
 if __name__ == '__main__':
