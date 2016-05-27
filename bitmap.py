@@ -7,7 +7,9 @@ class BitMap:
     
     self.im = Image.open("shapes/{im}".format(im=image)).convert('L')
     self.arr = np.array(self.im.getdata(), np.uint8).reshape(self.im.size)
+    self.origin = self._origin()
     
+
   def in_shape(self, pos):
     """
     Determine if the point at position pos
@@ -22,7 +24,7 @@ class BitMap:
     pos = (int(np.round(pos[0])),int(np.round(pos[1])))
     return self.arr[pos] != 255
     
-  def origin(self):
+  def _origin(self):
     """
     Return origin position.
     """

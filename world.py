@@ -6,12 +6,12 @@ from bitmap import BitMap
 
 class World:
 
-    def __init__(self, swarmSize, robotRadius, sensorRadius, velocity, ang_vel=3, tick=100):
+    def __init__(self, bitmap, swarmSize, robotRadius, sensorRadius, velocity, ang_vel=3, tick=100):
         """
         tick is miliseconds between updates
         """
         self.time = 0
-        bitmap = BitMap("shape1.png")
+        self.bitmap = bitmap
         self.swarmSize = swarmSize
         self.fullSwarmSize = self.swarmSize + 4
         self.radius = robotRadius

@@ -24,7 +24,8 @@ shapeOffsetY = 0
 scaleX = 1
 scaleY = 1
 
-world = World(swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
+bitmap = BitMap("shape1.png")
+world = World(bitmap, swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
 fasePos = world.rotate(0.75*robotRadius)
 '''
 for i in xrange(100):
@@ -78,6 +79,10 @@ def update(frame):
 
 def mainLoop():
     while True:
+        world.updateWorld()
+        world.updateWorld()
+        world.updateWorld()
+        world.updateWorld()
         world.updateWorld()
         fasePos = world.rotate(0.75*robotRadius)
         yield world.positions[0,:], world.positions[1,:], fasePos[0,:], fasePos[1,:]
