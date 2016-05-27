@@ -32,9 +32,9 @@ class Kilobot:
     """
     
     prev = self.dist_nn
-    current = min([s[0] for s in self.world.scan(self.ID)])
+    current = min([s[0] for s in self.world.scan(self.ID) if s[3]])
     
-    if self.rot and (current-prev) > 4*self.radius:
+    if self.rot and (current-prev) > 4*self.radius and np.random.uniform(0,1)<0.8:
       return self.rot
     elif self.rot:
       self.rot = False
@@ -162,14 +162,14 @@ class Kilobot:
     #Keep distance
     if self.state == 'move_while_outside' or \
     self.state == 'move_while_inside':
-       moving = [(s[0],s[2]) for s in self.world.scan(self.ID)]
+       moving = [(s[0],s[2]) for s in self.world.scan(self.ID) if not s[3]]
        
        for d, g in moving:
          if self.grad_val < prev_grad:
            if g < self.grad_val and d < Y:
              return 'stop'
-         else:
-           if self.grad < g and d < Y:
+         elif prev_grad < self.grad_val:
+           if self.grad_val < g and d < Y:
              return 'stop'
        
       
