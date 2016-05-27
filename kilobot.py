@@ -16,6 +16,7 @@ class Kilobot:
     self.rot        = False
     self.state      = 'wait_to_move'
     self.stationary = True
+    self.rand_nonce = np.random.uniform(0,0.1)
 
     #Seed robots never move.
     if pos is not None:
@@ -30,12 +31,14 @@ class Kilobot:
     Edge following routine.
     """
     
-    if self.rot:
-      self.rot = False
-      return 'forward'
-    
     prev = self.dist_nn
     current = min([s[0] for s in self.world.scan(self.ID)])
+    
+    if self.rot and (current-prev) > 4*self.radius:
+      return self.rot
+    elif self.rot:
+      self.rot = False
+      return 'forward'
     
     move = 'stop'
       
@@ -44,13 +47,13 @@ class Kilobot:
         move = 'forward'
       else:
         move = 'counter-clock'
-        self.rot = True
+        self.rot = move
     else:
       if prev > current:
-        move = 'forwad'
+        move = 'forward'
       else:
         move = 'clock'
-        self.rot = True
+        self.rot = move
         
     self.dist_nn = current
     
@@ -72,7 +75,8 @@ class Kilobot:
     #Only consider neighbors closer than G
     grad_vals = [s[2] for s in self.world.scan(self.ID) if s[0]<G]
     
-    self.grad_val = min(grad_vals)+1
+    if grad_vals:
+      self.grad_val = min(grad_vals)+1+self.rand_nonce
   
   def localize(self):
     """
@@ -123,10 +127,12 @@ class Kilobot:
       return 'stop'
     
     #Yield distance
-    Y = 4*self.radius
+    Y = 3*self.radius
 
     if self.state == 'joined_shape':
       return 'stop'
+      
+    prev_grad = self.grad_val
       
     #Update gradient and localize
     self.update_gradient()
@@ -141,17 +147,31 @@ class Kilobot:
     if self.state == 'wait_to_move':
       
       #Check if there are robots nearby already moving.
-      if [1 for s in self.world.scan(self.ID) if not s[3]]:
+      if [1 for s in self.world.scan(self.ID) if not s[3] and s[0] < Y]:
         return 'stop'
       
       #Highest gradient value among neighbours.
       h = max([s[2] for s in self.world.scan(self.ID)])
       
-      if self.grad_val >= h:
+      if self.grad_val > h:
         self.state = 'move_while_outside'
         self.stationary = False
       else:
         return 'stop'
+        
+    #Keep distance
+    if self.state == 'move_while_outside' or \
+    self.state == 'move_while_inside':
+       moving = [(s[0],s[2]) for s in self.world.scan(self.ID)]
+       
+       for d, g in moving:
+         if self.grad_val < prev_grad:
+           if g < self.grad_val and d < Y:
+             return 'stop'
+         else:
+           if self.grad < g and d < Y:
+             return 'stop'
+       
       
     #Move while outside.
     if self.state == 'move_while_outside':
@@ -159,7 +179,7 @@ class Kilobot:
       if self.bitmap.in_shape(self.pos):
         self.state = 'move_while_inside'
         
-      return self.edge_follow(1.1*self.radius)
+      return self.edge_follow(2.3*self.radius)
     
     #Move while inside.
     elif self.state == 'move_while_inside':
@@ -176,5 +196,5 @@ class Kilobot:
         return 'stop'
         
       else:
-        return self.edge_follow(1.1*self.radius)
+        return self.edge_follow(2.3*self.radius)
           
