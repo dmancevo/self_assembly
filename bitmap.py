@@ -7,7 +7,7 @@ class BitMap:
     
     self.arr = np.transpose(scipy.misc.imread(file_name, mode="L"))
     self.shape = np.transpose(np.nonzero(self.arr-255))
-    #self.shape_set = set([tuple(pos) for pos in np.transpose(np.nonzero(self.arr-255))])
+    self.shape_set = set([tuple(pos) for pos in np.transpose(np.nonzero(self.arr-255))])
     self._origin()
 
   def in_shape(self, pos):
@@ -20,11 +20,13 @@ class BitMap:
     
     if pos is None:
       return False
-    
-    #pos = (int(np.round(pos[1])),int(np.round(pos[0])))
-    #return pos in self.shape_set
-    pos = (int(np.round(pos[0])),int(np.round(pos[1])))
-    return self.arr[pos] != 255
+
+    '''
+    x = int(np.round(pos[0] + self.origin[0])) 
+    y = int(np.round(pos[1] + self.origin[1]))
+    return (x,y) in self.shape_set
+    '''
+    return False
 
     
   def _origin(self):
@@ -32,8 +34,6 @@ class BitMap:
     Return origin position.
     """
     ind = np.random.choice(range(len(self.shape)))
-    #y, x = self.shape[ind]
-    #self.origin = (x, y)
     self.origin = self.shape[ind]
 
     

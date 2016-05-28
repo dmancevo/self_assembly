@@ -18,9 +18,9 @@ class World:
         self.sensor = sensorRadius
         self.tick = tick
         origin = bitmap.origin
-        self.initialFormationWidth = 25
-        self.initialFormationOffsetX = origin[0]
-        self.initialFormationOffsetY = origin[1]
+        self.initialFormationWidth = 5
+        self.initialFormationOffsetX = 0#origin[0]
+        self.initialFormationOffsetY = 0#origin[1]
 
         self.robots = []
         #add 4 source robots
@@ -131,6 +131,7 @@ class World:
         self.stationarity = []
         for i in xrange(self.fullSwarmSize):
             self.estimatedPositions.append(self.robots[i].pos)
+            print(i, 'estimated pos: ', self.robots[i].pos, '; true pos: ', self.positions[:,i])
             self.gradients.append(self.robots[i].grad_val)
             self.stationarity.append(self.robots[i].stationary)
 
@@ -169,7 +170,7 @@ class World:
         this method is called each iteration from the main simulation loop
         """
         self.time += 1./self.tick
-        #print self.time
+        print self.time
         #TODO: ask all robots to make a move
 
         for i in xrange(self.fullSwarmSize):
@@ -214,8 +215,5 @@ class World:
             if ind != kilobot_id:
                 neihbourData = (self.distances[kilobot_id, ind], self.estimatedPositions[ind], self.gradients[ind], self.stationarity[ind])
                 scanData.append(neihbourData)
-
-        if len(scanData) == 0:
-            print("EVERYTHING IS OLGA'S FAULT")
         return scanData
         

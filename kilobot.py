@@ -96,25 +96,30 @@ class Kilobot:
       return
     
     myPos = np.zeros(2)
-    for pair in neighbors:
-      
-      #Measured distance (based on signal strengh)
-      #and neighbor coordinates.
-      d, pos = pair
-      
-      pos = np.array(pos)
-      
-      #Distance based on coordinates as opposed to signal strength.
-      c = np.linalg.norm(pos-myPos)
-      
-      #Unit vector pointing from neighbor to self.
-      v = (myPos - pos)/c
-      
-      #Compute new position.
-      n = pos + d*v
-      
-      #Move 1/4 of the way from old calculated position towards new one.
-      myPos -= (myPos-n)/4.0
+    
+    for _ in range(15):
+      for pair in neighbors:
+        
+        #Measured distance (based on signal strengh)
+        #and neighbor coordinates.
+        d, pos = pair
+        
+        pos = np.array(pos)
+        
+        #Distance based on coordinates as opposed to signal strength.
+        c = np.linalg.norm(pos-myPos)
+        
+        #Unit vector pointing from neighbor to self.
+        if c == 0:
+            v = 0
+        else:
+          v = (myPos - pos)/c
+        
+        #Compute new position.
+        n = pos + d*v
+        
+        #Move 1/4 of the way from old calculated position towards new one.
+        myPos -= (myPos-n)/4.0
       
     self.pos = tuple(myPos)
   

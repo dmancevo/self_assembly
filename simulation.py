@@ -8,15 +8,23 @@ from scipy.misc import imread
 
 robotRadius = 0.7
 sensorRadius = 5
-swarmSize = 50
+swarmSize = 20
 tick = 50 # miliseconds
 velocity = 1
 ang_velocity = 4
 
-fieldSizeX1 = 0
-fieldSizeX2 = 100
-fieldSizeY1 = 0
-fieldSizeY2 = 100
+file_path = "shapes/shape1.png"
+
+bitmap = BitMap(file_path)
+origin = bitmap.origin
+datafile = open(file_path)
+img = imread(datafile, mode='L')
+img[np.nonzero(img-255)] = 0
+
+fieldSizeX1 = 0#-origin[0]
+fieldSizeX2 = 100 + fieldSizeX1
+fieldSizeY1 = 0#-origin[1]
+fieldSizeY2 = 100 + fieldSizeY1
 
 #shape to assemble
 shapeX = np.array([0, 20, 20, 10, 10, 0, 0])
@@ -26,12 +34,7 @@ shapeOffsetY = 0
 scaleX = 1
 scaleY = 1
 
-file_path = "shapes/shape1.png"
 
-bitmap = BitMap(file_path)
-datafile = open(file_path)
-img = imread(datafile, mode='L')
-img[np.nonzero(img-255)] = 0
 
 world = World(bitmap,  swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
 fasePos = world.rotate(0.75*robotRadius)
@@ -93,7 +96,7 @@ def mainLoop():
         world.updateWorld()
         world.updateWorld()
         fasePos = world.rotate(0.75*robotRadius)
-        yield world.positions[0,:], world.positions[1,:], fasePos[0,:], fasePos[1,:]
+        yield world.positions[0,:] + origin[0], world.positions[1,:] + origin[1], fasePos[0,:], fasePos[1,:]
         
 
 anim = animation.FuncAnimation(fig, update, mainLoop, init_func=init, interval=tick)
