@@ -2,13 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.collections import EllipseCollection
+from matplotlib.text import Annotation
 from world import World
 from bitmap import BitMap
 from scipy.misc import imread
+from math import floor
 
 robotRadius = 0.7
-sensorRadius = 5
-swarmSize = 20
+sensorRadius = 6
+swarmSize = 45
+shapeWidth = 7
 tick = 50 # miliseconds
 velocity = 1
 ang_velocity = 4
@@ -21,9 +24,9 @@ datafile = open(file_path)
 img = imread(datafile, mode='L')
 img[np.nonzero(img-255)] = 0
 
-fieldSizeX1 = 0#-origin[0]
+fieldSizeX1 = 0
 fieldSizeX2 = 100 + fieldSizeX1
-fieldSizeY1 = 0#-origin[1]
+fieldSizeY1 = 0
 fieldSizeY2 = 100 + fieldSizeY1
 
 #shape to assemble
@@ -36,7 +39,7 @@ scaleY = 1
 
 
 
-world = World(bitmap,  swarmSize, robotRadius, sensorRadius, velocity, ang_velocity, tick)
+world = World(bitmap,  swarmSize, shapeWidth, robotRadius, sensorRadius, velocity, ang_velocity, tick)
 fasePos = world.rotate(0.75*robotRadius)
 '''
 for i in xrange(100):
@@ -44,7 +47,6 @@ for i in xrange(100):
 '''
 
 startPos = list(zip(world.positions[0,:], world.positions[1,:]))
-#startPosFace = list(zip(world.positions[0,:], world.positions[1,:] + 0.75*robotRadius))
 startPosFace = list(zip(world.positions[0,:] + fasePos[0,:], world.positions[1,:] + fasePos[1,:]))
 
 fig = plt.figure(figsize=(8, 8))
@@ -53,17 +55,17 @@ ax.set_xlim(fieldSizeX1, fieldSizeX2), ax.set_xticks([])
 ax.set_ylim(fieldSizeY1, fieldSizeY2), ax.set_yticks([])
 plt.gca().set_aspect('equal', adjustable='box')
 
-#shape = ax.plot(shapeOffsetX + scaleX * shapeX, shapeOffsetY + scaleY * shapeY)
-
-Blues = plt.get_cmap('Blues')
-grad = world.gradients
-max_g = 40.
-colors = map(lambda x: 0 if max_g==float('inf') else x/max_g , grad)
+grad_vals = map(lambda x: -1 if x== float('inf') else int(floor(x)), world.gradients)
+anns = []
+for label, x, y in zip(grad_vals, world.positions[0,:] + origin[0], world.positions[1,:]+origin[1]):
+    ann = Annotation(label,xy=(x,y), xytext = (0, 0),textcoords = 'offset points', ha = 'center', va = 'center')
+    ax.add_artist(ann)
+    anns.append(ann)
 
 circles = ax.add_collection(EllipseCollection(widths=2*robotRadius, heights=2*robotRadius, angles=0,
-                                    units='xy', edgecolors='black', linewidth=0.5,#facecolors=world.colors,
+                                    units='xy', edgecolors='black', linewidth=0.5,facecolors=world.colors,
                                     offsets=startPos, transOffset=ax.transData))
-circles.set_array(np.array(grad))
+
 points = ax.add_collection(EllipseCollection(widths=0.5*robotRadius, heights=0.5*robotRadius, angles=0,
                                     units='xy', facecolors='black',
                                     offsets=startPosFace, transOffset=ax.transData))
@@ -76,14 +78,18 @@ def init():
 
 def update(frame):
     circles.set_offsets(list(zip(frame[0], frame[1])))
-    
-    grad = world.gradients
-    max_g = 40.
-    colors = map(lambda x: 0 if max_g==float('inf') else x/max_g , grad)
-    circles.set_color(Blues(np.array(colors)))
+    grad_vals = map(lambda x: -1 if x== float('inf') else int(floor(x)), world.gradients)
+    i = 0
+    for label, x, y in zip(grad_vals, world.positions[0,:] + origin[0], world.positions[1,:]+origin[1]):
+        anns[i].remove()
+        ann = Annotation(label,xy=(x,y), xytext = (0, 0),textcoords = 'offset points', ha = 'center', va = 'center')
+        ax.add_artist(ann)
+        anns[i] = ann
+        i += 1
+
+    circles.set_color(world.colors)
     circles.set_edgecolor('black')
 
-    #points.set_offsets(list(zip(frame[0], frame[1] + 0.75*robotRadius)))
     points.set_offsets(list(zip(frame[0] + frame[2], frame[1] + frame[3])))
     return circles
 

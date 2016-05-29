@@ -21,20 +21,22 @@ class BitMap:
     if pos is None:
       return False
 
-    '''
+    
     x = int(np.round(pos[0] + self.origin[0])) 
     y = int(np.round(pos[1] + self.origin[1]))
     return (x,y) in self.shape_set
-    '''
-    return False
+    
+    #return False
 
     
   def _origin(self):
     """
     Return origin position.
     """
-    ind = np.random.choice(range(len(self.shape)))
-    self.origin = self.shape[ind]
+    #ind = np.random.choice(range(len(self.shape)))
+    #self.origin = self.shape[ind]
+    self.origin = np.array([29,37])
+    #self.origin = np.array([33,37])
 
     
   

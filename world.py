@@ -1,12 +1,12 @@
 #Here comes the physics engine (by Olga)
 import numpy as np
 from math import pi, sin, cos, sqrt
-from kilobot import Kilobot
+from kilobot2 import Kilobot
 from bitmap import BitMap
 
 class World:
 
-    def __init__(self, bitmap, swarmSize, robotRadius, sensorRadius, velocity, ang_vel=3, tick=100):
+    def __init__(self, bitmap, swarmSize, shape_width, robotRadius, sensorRadius, velocity, ang_vel=3, tick=100):
         """
         tick is miliseconds between updates
         """
@@ -18,7 +18,7 @@ class World:
         self.sensor = sensorRadius
         self.tick = tick
         origin = bitmap.origin
-        self.initialFormationWidth = 5
+        self.initialFormationWidth = shape_width
         self.initialFormationOffsetX = 0#origin[0]
         self.initialFormationOffsetY = 0#origin[1]
 
@@ -37,7 +37,7 @@ class World:
         for i in xrange(4, self.fullSwarmSize):
             self.robots.append(Kilobot(i, bitmap, self, radius=robotRadius))
 
-        self.colors = ['green'] * 4 + ['blue'] * self.swarmSize
+        self.colors = [0] * self.fullSwarmSize
         
         self.orientations = np.hstack((np.ones((4))*pi/2, np.random.rand(self.swarmSize) * 2 * pi)) #angle with X axes
 
@@ -129,11 +129,29 @@ class World:
         self.estimatedPositions = []
         self.gradients = []
         self.stationarity = []
+        self.transmit = []
+        self.in_shape = []
+        self.inside = []
+        self.colors = []
         for i in xrange(self.fullSwarmSize):
             self.estimatedPositions.append(self.robots[i].pos)
-            print(i, 'estimated pos: ', self.robots[i].pos, '; true pos: ', self.positions[:,i])
             self.gradients.append(self.robots[i].grad_val)
             self.stationarity.append(self.robots[i].stationary)
+            self.transmit.append(self.robots[i].transmit)
+            state = self.robots[i].state
+            self.in_shape.append(state=='joined_shape')
+            self.inside.append(state=='joined_shape' or state=='move_while_inside')
+            if self.robots[i].seed:
+                c = 'green'
+            elif state=='joined_shape':
+                c = 'red'
+            elif state == 'move_while_outside':
+                c = 'purple'
+            elif state == 'move_while_inside':
+                c = 'orange'
+            else:
+                c = 'blue'
+            self.colors.append(c)
 
 
     def turn(self, robot_id, direct):
@@ -170,12 +188,11 @@ class World:
         this method is called each iteration from the main simulation loop
         """
         self.time += 1./self.tick
-        print self.time
+        #print self.time
         #TODO: ask all robots to make a move
 
         for i in xrange(self.fullSwarmSize):
             move = self.robots[i].move()
-            #print self.time, i, move
             
             if move == "clock":
                 self.turn(i, -1)
@@ -213,7 +230,17 @@ class World:
         scanData = []
         for ind in indicesInRange:
             if ind != kilobot_id:
-                neihbourData = (self.distances[kilobot_id, ind], self.estimatedPositions[ind], self.gradients[ind], self.stationarity[ind])
+                if self.transmit[ind] and self.in_shape[ind]:
+                    pos = self.estimatedPositions[ind]
+                else:
+                    pos = None
+                neihbourData = (self.distances[kilobot_id, ind],
+                                pos, 
+                                self.gradients[ind],
+                                self.stationarity[ind],
+                                self.in_shape[ind],
+                                (ind < 4),
+                                self.inside[ind])
                 scanData.append(neihbourData)
         return scanData
         
